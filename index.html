@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crisis Management E-Learning Terminal</title>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        /* Scan lines effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(transparent 50%, rgba(0, 255, 0, 0.03) 50%);
+            background-size: 100% 4px;
+            animation: scanlines 0.1s linear infinite;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        /* Screen flicker */
+        .terminal-container {
+            position: relative;
+            height: 100%;
+            animation: flicker 3s infinite alternate;
+        }
+
+        @keyframes flicker {
+            0%, 98% { opacity: 1; }
+            99% { opacity: 0.98; }
+            100% { opacity: 0.99; }
+        }
+
+        .header {
+            background: #001100;
+            border-bottom: 2px solid #00ff00;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .learning-progress {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            align-items: center;
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #001a00;
+            border: 1px solid #00ff00;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.5s ease;
+        }
+
+        .main-interface {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            height: calc(100% - 60px);
+            gap: 2px;
+            background: #00ff00;
+        }
+
+        .mobile-nav {
+            display: none;
+            background: #001a00;
+            border-bottom: 1px solid #00ff00;
+            padding: 8px;
+        }
+
+        .mobile-nav-btn {
+            background: transparent;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 8px 16px;
+            margin-right: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        .mobile-nav-btn.active {
+            background: #00ff00;
+            color: #0a0a0a;
+        }
+
+        .terminal-section {
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-header {
+            background: #001a00;
+            padding: 8px 15px;
+            border-bottom: 1px solid #00ff00;
+            font-size: 12px;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lesson-indicator {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .terminal-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            position: relative;
+            max-height: calc(100vh - 200px);
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-left: 3px solid transparent;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .log-entry.priority-high {
+            border-left-color: #ff0000;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .log-entry.priority-medium {
+            border-left-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.05);
+        }
+
+        .log-entry.priority-low {
+            border-left-color: #00ff00;
+        }
+
+        .log-entry.educational {
+            border-left-color: #00aaff;
+            background: rgba(0, 170, 255, 0.1);
+        }
+
+        .log-entry.feedback {
+            border-left-color: #aa00ff;
+            background: rgba(170, 0, 255, 0.1);
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .message-content {
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .learning-panel {
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lesson-tabs {
+            display: flex;
+            background: #001a00;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #666;
+            padding: 8px;
+            font-size: 10px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            font-family: inherit;
+        }
+
+        .tab-btn.active {
+            color: #00ff00;
+            border-bottom-color: #00ff00;
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .scenario-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #001a00;
+            border: 1px solid #00ff00;
+        }
+
+        .learning-objective {
+            background: rgba(0, 170, 255, 0.1);
+            border: 1px solid #00aaff;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+        }
+
+        .objective-title {
+            color: #00aaff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .response-options {
+            margin-bottom: 15px;
+        }
+
+        .response-btn {
+            width: 100%;
+            background: #001a00;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            transition: all 0.2s;
+            text-align: left;
+            position: relative;
+        }
+
+        .response-btn:hover {
+            background: #00ff00;
+            color: #0a0a0a;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        .response-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .response-btn.correct {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .response-btn.incorrect {
+            border-color: #ff0000;
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .feedback-panel {
+            background: #001100;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 11px;
+            display: none;
+        }
+
+        .feedback-panel.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .skill-meters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .skill-meter {
+            text-align: center;
+        }
+
+        .skill-name {
+            font-size: 10px;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .skill-bar {
+            width: 100%;
+            height: 6px;
+            background: #001a00;
+            border: 1px solid #00ff00;
+            position: relative;
+        }
+
+        .skill-fill {
+            height: 100%;
+            background: #00ff00;
+            transition: width 0.5s ease;
+        }
+
+        .skill-value {
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-section.active {
+            display: block;
+        }
+
+        .quiz-question {
+            background: #001a00;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .quiz-options {
+            margin-top: 10px;
+        }
+
+        .quiz-option {
+            background: transparent;
+            border: 1px solid #666;
+            color: #00ff00;
+            padding: 8px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            width: 100%;
+            text-align: left;
+        }
+
+        .quiz-option:hover {
+            border-color: #00ff00;
+        }
+
+        .quiz-option.selected {
+            background: #00ff00;
+            color: #0a0a0a;
+        }
+
+        .next-btn {
+            background: #001a00;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .next-btn:hover {
+            background: #00ff00;
+            color: #0a0a0a;
+        }
+
+        .achievement-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #001a00;
+            border: 2px solid #00ff00;
+            padding: 15px;
+            z-index: 2000;
+            animation: achievementSlide 0.5s ease;
+            display: none;
+            max-width: 250px;
+        }
+
+        @keyframes achievementSlide {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .hint-system {
+            background: rgba(0, 170, 255, 0.1);
+            border: 1px solid #00aaff;
+            padding: 8px;
+            margin-top: 10px;
+            font-size: 10px;
+            display: none;
+        }
+
+        .hint-system.show {
+            display: block;
+        }
+
+        .lesson-card {
+            background: #001a00;
+            border: 1px solid #00ff00;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .lesson-card:hover {
+            background: rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .lesson-card.locked {
+            border-color: #666;
+            background: #0a0a0a;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .lesson-card.locked:hover {
+            background: #0a0a0a;
+            box-shadow: none;
+        }
+
+        .lesson-card.current {
+            border-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.1);
+        }
+
+        .lesson-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lesson-level {
+            font-size: 10px;
+            background: #00ff00;
+            color: #0a0a0a;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        .lesson-level.locked {
+            background: #666;
+            color: #ccc;
+        }
+
+        .lesson-progress-info {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .unlock-requirement {
+            font-size: 10px;
+            color: #ff6666;
+            margin-top: 5px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                min-height: 100%;
+                overflow-y: auto;
+            }
+
+            html {
+                height: auto;
+                min-height: 100%;
+            }
+
+            .terminal-container {
+                height: auto;
+                min-height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .header {
+                padding: 8px 15px;
+                flex-direction: column;
+                gap: 10px;
+                flex-shrink: 0;
+            }
+
+            .header h1 {
+                font-size: 14px !important;
+            }
+
+            .learning-progress {
+                gap: 10px;
+                font-size: 10px;
+                justify-content: center;
+            }
+
+            .progress-bar {
+                width: 80px;
+            }
+
+            .mobile-nav {
+                display: block;
+                flex-shrink: 0;
+            }
+
+            .main-interface {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr;
+                height: auto;
+                min-height: calc(100vh - 120px);
+                flex: 1;
+            }
+
+            .terminal-section {
+                display: none;
+                height: auto;
+                min-height: 70vh;
+            }
+
+            .terminal-section.mobile-active {
+                display: flex;
+            }
+
+            .learning-panel {
+                display: none;
+                height: auto;
+                min-height: 70vh;
+            }
+
+            .learning-panel.mobile-active {
+                display: flex;
+            }
+
+            .terminal-content {
+                height: auto;
+                min-height: 60vh;
+                max-height: none;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tab-content {
+                height: auto;
+                min-height: 60vh;
+                max-height: none;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .lesson-tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                font-size: 9px;
+                padding: 6px 4px;
+            }
+
+            .response-btn {
+                font-size: 10px;
+                padding: 8px;
+            }
+
+            .skill-meters {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .skill-meter {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .skill-name {
+                min-width: 80px;
+                text-align: left;
+                margin-bottom: 0;
+            }
+
+            .skill-bar {
+                flex: 1;
+            }
+
+            .achievement-popup {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                font-size: 12px;
+            }
+
+            .scenario-info {
+                font-size: 11px;
+            }
+
+            .learning-objective {
+                font-size: 11px;
+            }
+
+            .quiz-question {
+                font-size: 11px;
+            }
+
+            .quiz-option {
+                font-size: 10px;
+                padding: 6px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 12px !important;
+            }
+
+            .header div:last-child {
+                font-size: 9px !important;
+            }
+
+            .learning-progress {
+                font-size: 9px;
+            }
+
+            .progress-bar {
+                width: 60px;
+                height: 6px;
+            }
+
+            .mobile-nav-btn {
+                font-size: 10px;
+                padding: 6px 12px;
+            }
+
+            .terminal-content {
+                padding: 10px;
+                font-size: 11px;
+            }
+
+            .tab-content {
+                padding: 10px;
+            }
+
+            .response-btn {
+                font-size: 9px;
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+    
+    <div class="terminal-container">
+        <header class="header">
+            <div>
+                <h1 style="margin: 0; font-size: 18px;">APOCALYPSE SURVIVAL COMMAND CENTER</h1>
+                <div style="font-size: 11px; color: #666;">HUMANITY'S LAST HOPE TRAINING PROTOCOL</div>
+            </div>
+            <div class="learning-progress">
+                <div>
+                    <div style="margin-bottom: 2px;">LEVEL <span id="player-level">1</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="experience-progress" style="width: 0%"></div>
+                    </div>
+                    <div style="font-size: 9px; color: #666; margin-top: 2px;">
+                        <span id="current-exp">0</span>/<span id="exp-to-next">100</span> XP
+                    </div>
+                </div>
+                <div>
+                    <div style="margin-bottom: 2px;">LESSONS UNLOCKED</div>
+                    <div id="unlocked-lessons">1/5</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="mobile-nav">
+            <button class="mobile-nav-btn active" onclick="switchMobileView('terminal')">TERMINAL</button>
+            <button class="mobile-nav-btn" onclick="switchMobileView('learning')">LEARNING</button>
+        </div>
+
+        <main class="main-interface">
+            <section class="terminal-section mobile-active">
+                <div class="terminal-header">
+                    <span>Crisis Communication Log</span>
+                    <span class="lesson-indicator" id="lesson-indicator">Lesson 1: Priority Assessment</span>
+                </div>
+                <div class="terminal-content" id="terminal-log">
+                    <!-- Messages will be populated here -->
+                </div>
+            </section>
+
+            <aside class="learning-panel">
+                <div class="lesson-tabs">
+                    <button class="tab-btn active" onclick="switchTab('scenario')">SCENARIO</button>
+                    <button class="tab-btn" onclick="switchTab('lessons')">LESSONS</button>
+                    <button class="tab-btn" onclick="switchTab('skills')">SKILLS</button>
+                    <button class="tab-btn" onclick="switchTab('quiz')">QUIZ</button>
+                </div>
+                
+                <div class="tab-content" id="scenario-tab">
+                    <div class="learning-objective">
+                        <div class="objective-title">LEARNING OBJECTIVE</div>
+                        <div id="current-objective">Learn to assess and prioritize emergency communications based on urgency, available resources, and potential impact.</div>
+                    </div>
+
+                    <div class="scenario-info">
+                        <div><strong>Scenario:</strong> <span id="scenario-title">Multi-Point Emergency Response</span></div>
+                        <div><strong>Your Role:</strong> Emergency Coordinator</div>
+                        <div><strong>Time Limit:</strong> <span id="time-remaining">60s</span></div>
+                    </div>
+                    
+                    <div class="response-options">
+                        <div style="margin-bottom: 10px; font-size: 12px; color: #666;">SELECT YOUR RESPONSE:</div>
+                        <button class="response-btn" onclick="selectResponse(0)" id="option-0">
+                            [IMMEDIATE] Deploy all available rescue teams
+                        </button>
+                        <button class="response-btn" onclick="selectResponse(1)" id="option-1">
+                            [ASSESS] Request more information before acting
+                        </button>
+                        <button class="response-btn" onclick="selectResponse(2)" id="option-2">
+                            [PRIORITIZE] Focus on highest casualty situation first
+                        </button>
+                        <button class="response-btn" onclick="selectResponse(3)" id="option-3">
+                            [COORDINATE] Contact other emergency services
+                        </button>
+                    </div>
+
+                    <div class="feedback-panel" id="feedback-panel">
+                        <div><strong>FEEDBACK:</strong></div>
+                        <div id="feedback-text"></div>
+                        <div style="margin-top: 8px; font-size: 10px; color: #666;" id="learning-tip"></div>
+                    </div>
+
+                    <div class="hint-system" id="hint-system">
+                        <strong>💡 HINT:</strong> <span id="hint-text"></span>
+                    </div>
+
+                    <button class="next-btn" onclick="nextScenario()" id="next-btn" style="display: none;">CONTINUE TO NEXT SCENARIO</button>
+                </div>
+
+                <div class="tab-content" id="lessons-tab" style="display: none;">
+                    <div style="margin-bottom: 15px; font-size: 12px; color: #666;">LESSON SELECTION</div>
+                    
+                    <div id="lesson-list">
+                        <!-- Lessons will be populated here -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="skills-tab" style="display: none;">
+                    <div style="margin-bottom: 15px; font-size: 12px; color: #666;">SKILL DEVELOPMENT</div>
+                    
+                    <div class="skill-meters">
+                        <div class="skill-meter">
+                            <div class="skill-name">PRIORITY ASSESSMENT</div>
+                            <div class="skill-bar">
+                                <div class="skill-fill" id="priority-skill" style="width: 0%"></div>
+                            </div>
+                            <div class="skill-value" id="priority-value">0/100</div>
+                        </div>
+                        <div class="skill-meter">
+                            <div class="skill-name">RESOURCE MANAGEMENT</div>
+                            <div class="skill-bar">
+                                <div class="skill-fill" id="resource-skill" style="width: 0%"></div>
+                            </div>
+                            <div class="skill-value" id="resource-value">0/100</div>
+                        </div>
+                        <div class="skill-meter">
+                            <div class="skill-name">COMMUNICATION</div>
+                            <div class="skill-bar">
+                                <div class="skill-fill" id="communication-skill" style="width: 0%"></div>
+                            </div>
+                            <div class="skill-value" id="communication-value">0/100</div>
+                        </div>
+                        <div class="skill-meter">
+                            <div class="skill-name">DECISION SPEED</div>
+                            <div class="skill-bar">
+                                <div class="skill-fill" id="speed-skill" style="width: 0%"></div>
+                            </div>
+                            <div class="skill-value" id="speed-value">0/100</div>
+                        </div>
+                    </div>
+
+                    <div style="background: #001a00; padding: 10px; border: 1px solid #00ff00; font-size: 11px;">
+                        <div style="margin-bottom: 8px;"><strong>SKILL BREAKDOWN:</strong></div>
+                        <div>• <strong>Priority Assessment:</strong> Ability to quickly identify the most critical situations</div>
+                        <div>• <strong>Resource Management:</strong> Efficient allocation of limited emergency resources</div>
+                        <div>• <strong>Communication:</strong> Clear and effective information exchange</div>
+                        <div>• <strong>Decision Speed:</strong> Making quality decisions under time pressure</div>
+                    </div>
+                </div>
+
+                <div class="tab-content quiz-section" id="quiz-tab">
+                    <div class="quiz-question">
+                        <div style="font-weight: bold; margin-bottom: 10px;" id="quiz-question-text">
+                            What is the most important factor when prioritizing emergency responses?
+                        </div>
+                        <div class="quiz-options" id="quiz-options">
+                            <button class="quiz-option" onclick="selectQuizOption(0)">Available resources and personnel</button>
+                            <button class="quiz-option" onclick="selectQuizOption(1)">Severity of injuries and immediate danger</button>
+                            <button class="quiz-option" onclick="selectQuizOption(2)">Geographic proximity to response teams</button>
+                            <button class="quiz-option" onclick="selectQuizOption(3)">Time since the emergency was reported</button>
+                        </div>
+                    </div>
+                    <button class="next-btn" onclick="submitQuiz()" id="quiz-submit">SUBMIT ANSWER</button>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <div class="achievement-popup" id="achievement-popup">
+        <div style="text-align: center;">
+            <div style="font-size: 16px; margin-bottom: 5px;">🏆 ACHIEVEMENT UNLOCKED!</div>
+            <div style="font-size: 12px;" id="achievement-text">Quick Decision Maker</div>
+        </div>
+    </div>
+
+    <script>
+        let currentLesson = 0;
+        let currentScenario = 0;
+        let selectedResponse = -1;
+        let scenarioStartTime = Date.now();
+        let timeRemaining = 60;
+        let timerInterval;
+        
+        let skills = {
+            priority: 0,
+            resource: 0,
+            communication: 0,
+            speed: 0
+        };
+
+        let playerLevel = 1;
+        let experiencePoints = 0;
+        let experienceToNext = 100;
+        let overallScore = 0;
+        let completedScenarios = 0;
+        let unlockedLessons = 1;
+
+        const lessons = [
+            {
+                title: "Day Zero: The Collapse Begins",
+                level: 1,
+                objective: "Survive the first hours as civilization crumbles. Learn to prioritize immediate survival needs.",
+                unlockRequirement: 0,
+                scenarios: [
+                    {
+                        title: "The First Tremor",
+                        difficulty: 1,
+                        messages: [
+                            { text: "EMERGENCY BROADCAST: Massive seismic activity detected worldwide", priority: "high", delay: 1000 },
+                            { text: "BREAKING: Downtown financial district - 40-story tower tilting dangerously", priority: "high", delay: 2000 },
+                            { text: "SURVIVOR REPORT: 'People are trapped on floors 15-20, structure groaning'", priority: "high", delay: 3000 },
+                            { text: "SYSTEM WARNING: This is not a drill. Global infrastructure failing.", priority: "high", delay: 4000 }
+                        ],
+                        options: [
+                            { text: "[EVACUATE] Order immediate building evacuation", correct: true, feedback: "Smart! In the early collapse, saving lives takes priority over everything else." },
+                            { text: "[ASSESS] Send structural engineers to evaluate", correct: false, feedback: "No time for assessments when the world is ending. People die while you wait." },
+                            { text: "[SECURE] Establish perimeter and wait for backup", correct: false, feedback: "Backup isn't coming. The old world is gone - act now or lose everyone." }
+                        ],
+                        skills: { priority: 10, communication: 5, speed: 8 },
+                        hint: "When civilization collapses, every second counts. Save who you can, now.",
+                        experienceReward: 25
+                    },
+                    {
+                        title: "Multiple Collapse Points",
+                        difficulty: 2,
+                        messages: [
+                            { text: "CHAOS REPORT: Three major incidents across the dying city", priority: "high", delay: 1000 },
+                            { text: "SITE ALPHA: Hospital generator failing, 200 patients on life support", priority: "high", delay: 2000 },
+                            { text: "SITE BRAVO: Shopping center roof collapsed, families trapped in debris", priority: "high", delay: 3000 },
+                            { text: "SITE CHARLIE: Chemical plant fire spreading, toxic cloud forming", priority: "medium", delay: 4000 },
+                            { text: "REALITY CHECK: You have 12 rescue personnel left. Choose wisely.", priority: "high", delay: 5000 }
+                        ],
+                        options: [
+                            { text: "[SPREAD] Split teams equally across all sites", correct: false, feedback: "Spreading thin means failing everywhere. In the apocalypse, hard choices save more lives." },
+                            { text: "[MEDICAL] Focus all resources on the hospital", correct: true, feedback: "Brilliant! 200 lives vs dozens. Cold math, but necessary for survival." },
+                            { text: "[ASSESS] Gather more intel before deciding", correct: false, feedback: "Analysis paralysis kills. The old world's protocols died with civilization." },
+                            { text: "[CHEMICAL] Prioritize the toxic threat", correct: false, feedback: "The chemical threat is slower. Save the certain deaths first." }
+                        ],
+                        skills: { priority: 15, resource: 8, communication: 10, speed: 12 },
+                        hint: "In apocalyptic triage, save the most lives possible. Sentiment is a luxury you can't afford.",
+                        experienceReward: 40
+                    },
+                    {
+                        title: "The Infected Arrive",
+                        difficulty: 2,
+                        messages: [
+                            { text: "HORRIFIC UPDATE: Reports of 'changed' people attacking survivors", priority: "high", delay: 1000 },
+                            { text: "FIELD MEDIC: 'The bite victims... they're not dying. They're changing.'", priority: "high", delay: 2000 },
+                            { text: "TRIAGE NIGHTMARE: Bite victim - conscious, begging for help", priority: "high", delay: 3000 },
+                            { text: "CLEAN SURVIVOR: Severe burns, needs immediate medical attention", priority: "medium", delay: 4000 },
+                            { text: "INFECTED BREACH: 'They're in the medical tent! Multiple casualties!'", priority: "high", delay: 5000 }
+                        ],
+                        options: [
+                            { text: "[QUARANTINE] Isolate bite victims, treat clean survivors", correct: true, feedback: "Harsh but necessary. In the new world, one infected can doom everyone." },
+                            { text: "[HUMANITARIAN] Treat all victims equally", correct: false, feedback: "Noble, but naive. Your compassion just infected the entire medical team." },
+                            { text: "[ABANDON] Evacuate medical area immediately", correct: false, feedback: "Running saves you but dooms the treatable survivors. Find another way." }
+                        ],
+                        skills: { priority: 18, communication: 8, speed: 10 },
+                        hint: "The infected change everything. Survival means making impossible choices.",
+                        experienceReward: 35
+                    }
+                ]
+            },
+            {
+                title: "Week One: Scarcity Wars",
+                level: 2,
+                objective: "Manage dwindling resources as society fragments. Every supply decision determines who lives.",
+                unlockRequirement: 50,
+                scenarios: [
+                    {
+                        title: "The Last Medical Supplies",
+                        difficulty: 3,
+                        messages: [
+                            { text: "INVENTORY CRISIS: Medical supplies critically low", priority: "medium", delay: 1000 },
+                            { text: "AVAILABLE: 2 doses of antibiotics, 1 emergency surgery kit", priority: "high", delay: 2000 },
+                            { text: "PATIENT A: Child with infected wound, will die without antibiotics", priority: "high", delay: 3000 },
+                            { text: "PATIENT B: Pregnant woman, complications, needs surgery immediately", priority: "high", delay: 4000 },
+                            { text: "PATIENT C: Elderly man, pneumonia, antibiotics could save him", priority: "medium", delay: 5000 }
+                        ],
+                        options: [
+                            { text: "[YOUTH] Save the child and pregnant woman", correct: true, feedback: "Pragmatic choice. The young have the best chance of rebuilding civilization." },
+                            { text: "[EQUAL] Treat patients in order of arrival", correct: false, feedback: "Fair, but fairness is a luxury. Strategic choices preserve the future." },
+                            { text: "[ELDER] Respect age and experience first", correct: false, feedback: "Noble, but the elderly are less likely to survive the harsh new world." }
+                        ],
+                        skills: { resource: 20, priority: 12, communication: 8, speed: 10 },
+                        hint: "Resources are finite. Prioritize those most likely to survive and rebuild.",
+                        experienceReward: 60
+                    },
+                    {
+                        title: "Fuel for the Generators",
+                        difficulty: 3,
+                        messages: [
+                            { text: "POWER CRISIS: Generator fuel running critically low", priority: "high", delay: 1000 },
+                            { text: "REMAINING FUEL: Enough for 6 hours of power to ONE location", priority: "high", delay: 2000 },
+                            { text: "OPTION A: Survivor shelter housing 50 families with children", priority: "high", delay: 3000 },
+                            { text: "OPTION B: Research lab working on infection cure", priority: "high", delay: 4000 },
+                            { text: "OPTION C: Radio tower maintaining contact with other survivor groups", priority: "medium", delay: 5000 },
+                            { text: "HARSH REALITY: The other locations will go dark. Choose.", priority: "high", delay: 6000 }
+                        ],
+                        options: [
+                            { text: "[RESEARCH] Power the lab - cure saves everyone", correct: true, feedback: "Long-term thinking! A cure could save all of humanity, not just 50 people." },
+                            { text: "[SHELTER] Protect the families - guaranteed lives", correct: false, feedback: "Compassionate but short-sighted. 50 saved now vs potentially millions later." },
+                            { text: "[COMMUNICATION] Keep the radio tower online", correct: false, feedback: "Information is valuable, but not more than lives or potential cures." }
+                        ],
+                        skills: { resource: 25, priority: 15, communication: 10, speed: 12 },
+                        hint: "Think beyond immediate needs. What choice offers hope for humanity's future?",
+                        experienceReward: 70
+                    }
+                ]
+            },
+            {
+                title: "Month Two: Faction Warfare",
+                level: 3,
+                objective: "Navigate the politics of survival as groups turn against each other for resources.",
+                unlockRequirement: 120,
+                scenarios: [
+                    {
+                        title: "The Alliance Fractures",
+                        difficulty: 4,
+                        messages: [
+                            { text: "POLITICAL CRISIS: The three survivor factions are breaking apart", priority: "high", delay: 1000 },
+                            { text: "MILITARY FACTION: 'We need those medical supplies for our wounded soldiers'", priority: "high", delay: 2000 },
+                            { text: "CIVILIAN FACTION: 'Our children are dying! You promised to protect everyone!'", priority: "medium", delay: 3000 },
+                            { text: "SCIENTIST FACTION: 'Without lab equipment, the cure research stops forever'", priority: "high", delay: 4000 },
+                            { text: "ULTIMATUM: Each faction threatens to leave the alliance. Choose your priority.", priority: "high", delay: 5000 }
+                        ],
+                        options: [
+                            { text: "[BALANCE] Negotiate a three-way resource split", correct: true, feedback: "Diplomatic mastery! Keeping the alliance together multiplies everyone's survival chances." },
+                            { text: "[MILITARY] Side with the soldiers for protection", correct: false, feedback: "Short-term security, but you've lost the scientists and civilians' trust forever." },
+                            { text: "[SCIENCE] Support the cure research above all", correct: false, feedback: "The cure means nothing if your community tears itself apart first." }
+                        ],
+                        skills: { communication: 25, resource: 15, priority: 10, speed: 8 },
+                        hint: "In the apocalypse, unity is the ultimate resource. Divided communities die.",
+                        experienceReward: 80
+                    },
+                    {
+                        title: "Information Warfare",
+                        difficulty: 4,
+                        messages: [
+                            { text: "INTELLIGENCE FLOOD: Multiple critical reports incoming simultaneously", priority: "high", delay: 1000 },
+                            { text: "SCOUT ALPHA: 'Massive infected horde, 3 days out, 500+ strong'", priority: "high", delay: 1500 },
+                            { text: "SCOUT BRAVO: 'Hostile survivor group raiding settlements, heavily armed'", priority: "high", delay: 2000 },
+                            { text: "SCOUT CHARLIE: 'Clean water source discovered, but it's in raider territory'", priority: "medium", delay: 2500 },
+                            { text: "RADIO CHATTER: 'Government bunker found, but signal is weak and fading'", priority: "low", delay: 3000 },
+                            { text: "DECISION POINT: You can only act on ONE report. Choose wisely.", priority: "high", delay: 3500 }
+                        ],
+                        options: [
+                            { text: "[HORDE] Prepare defenses against the infected wave", correct: true, feedback: "Survival instinct! 500 infected could end everything. Other problems can wait." },
+                            { text: "[RAIDERS] Launch preemptive strike on hostile survivors", correct: false, feedback: "Fighting humans while infected approach is tactical suicide." },
+                            { text: "[WATER] Secure the clean water source immediately", correct: false, feedback: "Water is vital, but you'll be too dead to drink it if the horde arrives." }
+                        ],
+                        skills: { communication: 20, priority: 18, speed: 15, resource: 8 },
+                        hint: "When multiple crises hit, prioritize the one that could end everything.",
+                        experienceReward: 75
+                    }
+                ]
+            },
+            {
+                title: "Year One: The New Order",
+                level: 4,
+                objective: "Establish sustainable systems as the old world's remnants finally crumble completely.",
+                unlockRequirement: 250,
+                scenarios: [
+                    {
+                        title: "The Final Government Collapse",
+                        difficulty: 5,
+                        messages: [
+                            { text: "BREAKING: Last government stronghold has fallen to internal rebellion", priority: "high", delay: 1000 },
+                            { text: "REFUGEE CRISIS: 2000 government survivors fleeing to your territory", priority: "high", delay: 2500 },
+                            { text: "RESOURCE STRAIN: Your settlement can barely feed current 800 residents", priority: "high", delay: 4000 },
+                            { text: "POLITICAL TENSION: Your people demand you turn away the government refugees", priority: "high", delay: 5500 },
+                            { text: "MILITARY ASSETS: Refugees bring weapons, vehicles, and trained soldiers", priority: "medium", delay: 7000 },
+                            { text: "MORAL CHOICE: Accept them and risk starvation, or turn away desperate people?", priority: "high", delay: 8500 }
+                        ],
+                        options: [
+                            { text: "[CONDITIONAL] Accept only essential personnel and military assets", correct: true, feedback: "Pragmatic leadership! You've gained crucial resources while managing the population burden." },
+                            { text: "[HUMANITARIAN] Accept all refugees regardless of capacity", correct: false, feedback: "Noble but naive. Your generosity just doomed everyone to slow starvation." },
+                            { text: "[ISOLATIONIST] Turn away all refugees to protect your people", correct: false, feedback: "You've preserved resources but lost valuable military assets and made powerful enemies." }
+                        ],
+                        skills: { priority: 20, resource: 20, communication: 15, speed: 15 },
+                        hint: "True leadership means making hard choices that ensure long-term survival.",
+                        experienceReward: 100
+                    }
+                ]
+            },
+            {
+                title: "The Reckoning: Humanity's Last Stand",
+                level: 5,
+                objective: "Lead the final battle for humanity's survival against overwhelming odds.",
+                unlockRequirement: 400,
+                scenarios: [
+                    {
+                        title: "The Mega-Horde Approaches",
+                        difficulty: 6,
+                        messages: [
+                            { text: "APOCALYPTIC ALERT: Satellite imagery shows the unthinkable", priority: "high", delay: 1000 },
+                            { text: "MEGA-HORDE: 50,000+ infected converging from all major dead cities", priority: "high", delay: 2000 },
+                            { text: "TIMELINE: 72 hours until they reach the last human strongholds", priority: "high", delay: 3000 },
+                            { text: "RESOURCES: 5,000 armed survivors, limited ammunition, no air support", priority: "high", delay: 4000 },
+                            { text: "STRATEGIC OPTIONS: Fight, flee, or attempt the untested cure deployment", priority: "high", delay: 5000 },
+                            { text: "FINAL CHOICE: This decision determines humanity's fate. Choose wisely.", priority: "high", delay: 6000 }
+                        ],
+                        options: [
+                            { text: "[CURE] Deploy experimental airborne cure despite risks", correct: true, feedback: "Legendary decision! You've chosen hope over fear. Humanity's greatest gamble pays off." },
+                            { text: "[FORTRESS] Fortify positions and fight to the last bullet", correct: false, feedback: "Brave but futile. Courage alone cannot overcome such overwhelming numbers." },
+                            { text: "[EXODUS] Evacuate to remote locations and rebuild", correct: false, feedback: "Running preserves some humans, but abandons millions and ensures endless pursuit." }
+                        ],
+                        skills: { priority: 25, resource: 25, communication: 25, speed: 20 },
+                        hint: "When facing extinction, only the boldest choices offer true salvation.",
+                        experienceReward: 150
+                    }
+                ]
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                question: "What is the most important factor when prioritizing emergency responses?",
+                options: [
+                    "Available resources and personnel",
+                    "Severity of injuries and immediate danger",
+                    "Geographic proximity to response teams", 
+                    "Time since the emergency was reported"
+                ],
+                correct: 1,
+                explanation: "Severity of injuries and immediate danger should be the primary factor, as saving lives takes precedence over other considerations."
+            }
+        ];
+
+        function addLogEntry(message, priority = 'low') {
+            const terminal = document.getElementById('terminal-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry priority-${priority}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `
+                <div class="timestamp">[${timestamp}]</div>
+                <div class="message-content">${message}</div>
+            `;
+            
+            terminal.appendChild(entry);
+            
+            // Smooth auto-scroll to bottom
+            setTimeout(() => {
+                terminal.scrollTo({
+                    top: terminal.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+        }
+
+        function typeMessage(text, priority, callback) {
+            const terminal = document.getElementById('terminal-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry priority-${priority}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `
+                <div class="timestamp">[${timestamp}]</div>
+                <div class="message-content"></div>
+            `;
+            
+            terminal.appendChild(entry);
+            
+            // Smooth auto-scroll to bottom
+            setTimeout(() => {
+                terminal.scrollTo({
+                    top: terminal.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }, 100);
+            
+            let i = 0;
+            const messageContent = entry.querySelector('.message-content');
+            
+            function typeChar() {
+                if (i < text.length) {
+                    messageContent.textContent = text.substring(0, i + 1) + '▋';
+                    i++;
+                    setTimeout(typeChar, 30 + Math.random() * 30);
+                } else {
+                    messageContent.textContent = text;
+                    // Smooth scroll to bottom after typing completes
+                    setTimeout(() => {
+                        terminal.scrollTo({
+                            top: terminal.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    }, 100);
+                    if (callback) callback();
+                }
+            }
+            
+            setTimeout(typeChar, 300);
+        }
+
+        function loadScenario() {
+            const lesson = lessons[currentLesson];
+            const scenario = lesson.scenarios[currentScenario];
+            
+            document.getElementById('lesson-indicator').textContent = `Lesson ${currentLesson + 1}: ${lesson.title}`;
+            document.getElementById('current-objective').textContent = lesson.objective;
+            document.getElementById('scenario-title').textContent = scenario.title;
+            
+            // Update options in sidebar (but hide them initially)
+            scenario.options.forEach((option, index) => {
+                const btn = document.getElementById(`option-${index}`);
+                btn.textContent = option.text;
+                btn.className = 'response-btn';
+                btn.disabled = true;
+                btn.style.display = 'none';
+            });
+            
+            // Reset UI
+            document.getElementById('feedback-panel').classList.remove('show');
+            document.getElementById('hint-system').classList.remove('show');
+            document.getElementById('next-btn').style.display = 'none';
+            selectedResponse = -1;
+            
+            // Start timer
+            timeRemaining = 60;
+            startTimer();
+            
+            // Load messages
+            scenarioStartTime = Date.now();
+            let messageIndex = 0;
+            
+            function loadNextMessage() {
+                if (messageIndex < scenario.messages.length) {
+                    const message = scenario.messages[messageIndex];
+                    setTimeout(() => {
+                        typeMessage(message.text, message.priority, () => {
+                            messageIndex++;
+                            if (messageIndex >= scenario.messages.length) {
+                                // All messages loaded, show response options in terminal
+                                setTimeout(() => {
+                                    showTerminalResponseOptions();
+                                }, 1500);
+                            } else {
+                                loadNextMessage();
+                            }
+                        });
+                    }, message.delay);
+                } else {
+                    // All messages loaded, show response options in terminal
+                    setTimeout(() => {
+                        showTerminalResponseOptions();
+                    }, 1500);
+                }
+            }
+            
+            loadNextMessage();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                document.getElementById('time-remaining').textContent = `${timeRemaining}s`;
+                
+                if (timeRemaining <= 10) {
+                    document.getElementById('time-remaining').style.color = '#ff0000';
+                }
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    if (selectedResponse === -1) {
+                        showHint();
+                    }
+                }
+            }, 1000);
+        }
+
+        function showTerminalResponseOptions() {
+            const lesson = lessons[currentLesson];
+            const scenario = lesson.scenarios[currentScenario];
+            
+            addLogEntry('SYSTEM: Response options available. Select your action:', 'educational');
+            
+            scenario.options.forEach((option, index) => {
+                const terminal = document.getElementById('terminal-log');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry priority-low terminal-option';
+                entry.style.cursor = 'pointer';
+                entry.style.border = '1px solid #00ff00';
+                entry.style.margin = '5px 0';
+                entry.style.transition = 'all 0.2s';
+                
+                const timestamp = new Date().toLocaleTimeString();
+                entry.innerHTML = `
+                    <div class="timestamp">[${timestamp}]</div>
+                    <div class="message-content">[${index + 1}] ${option.text}</div>
+                `;
+                
+                entry.onclick = () => selectTerminalResponse(index);
+                entry.onmouseover = () => {
+                    entry.style.background = 'rgba(0, 255, 0, 0.2)';
+                    entry.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.5)';
+                };
+                entry.onmouseout = () => {
+                    entry.style.background = '';
+                    entry.style.boxShadow = '';
+                };
+                
+                terminal.appendChild(entry);
+                
+                // Smooth auto-scroll to bottom
+                setTimeout(() => {
+                    terminal.scrollTo({
+                        top: terminal.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            });
+            
+            // Also show options in sidebar for reference
+            scenario.options.forEach((option, index) => {
+                const btn = document.getElementById(`option-${index}`);
+                btn.style.display = 'block';
+                btn.disabled = false;
+            });
+        }
+
+        function selectTerminalResponse(index) {
+            selectResponse(index);
+            
+            // Remove clickable options from terminal
+            document.querySelectorAll('.terminal-option').forEach(option => {
+                option.style.cursor = 'default';
+                option.onclick = null;
+                option.onmouseover = null;
+                option.onmouseout = null;
+                option.style.opacity = '0.6';
+            });
+        }
+
+        function selectResponse(index) {
+            if (selectedResponse !== -1) return;
+            
+            selectedResponse = index;
+            clearInterval(timerInterval);
+            
+            const lesson = lessons[currentLesson];
+            const scenario = lesson.scenarios[currentScenario];
+            const option = scenario.options[index];
+            const responseTime = 60 - timeRemaining;
+            
+            // Update button states in sidebar
+            scenario.options.forEach((opt, i) => {
+                const btn = document.getElementById(`option-${i}`);
+                btn.disabled = true;
+                if (i === index) {
+                    btn.classList.add(opt.correct ? 'correct' : 'incorrect');
+                }
+            });
+            
+            // Show feedback
+            const feedbackPanel = document.getElementById('feedback-panel');
+            document.getElementById('feedback-text').textContent = option.feedback;
+            
+            let expGained = 0;
+            if (option.correct) {
+                document.getElementById('learning-tip').textContent = "✓ Great decision-making! Quick and accurate responses save lives.";
+                updateSkills(scenario.skills, responseTime);
+                expGained = scenario.experienceReward;
+                
+                // Bonus XP for quick responses
+                if (responseTime < 20) {
+                    expGained = Math.floor(expGained * 1.5);
+                    showAchievement("Lightning Fast Response!");
+                } else if (responseTime < 35) {
+                    expGained = Math.floor(expGained * 1.2);
+                    showAchievement("Quick Decision Maker");
+                } else {
+                    showAchievement("Correct Response");
+                }
+                
+                addLogEntry(`RESULT: ✓ CORRECT RESPONSE - ${option.feedback}`, 'educational');
+            } else {
+                document.getElementById('learning-tip').textContent = "⚠ Review the priority assessment principles and try to think about immediate life-threatening situations first.";
+                updateSkills({priority: 5, resource: 2, communication: 5, speed: 3}, responseTime);
+                expGained = Math.floor(scenario.experienceReward * 0.3); // Partial XP for attempt
+                
+                addLogEntry(`RESULT: ✗ INCORRECT RESPONSE - ${option.feedback}`, 'feedback');
+            }
+            
+            gainExperience(expGained);
+            feedbackPanel.classList.add('show');
+            document.getElementById('next-btn').style.display = 'block';
+            
+            // Add response to log
+            addLogEntry(`COORDINATOR DECISION: ${option.text}`, 'educational');
+            addLogEntry(`EXPERIENCE GAINED: +${expGained} XP`, 'feedback');
+            
+            completedScenarios++;
+            updateProgress();
+            
+            // Auto-advance to next scenario after showing feedback
+            setTimeout(() => {
+                addLogEntry('SCENARIO COMPLETE - Advancing to next training module...', 'educational');
+                nextScenario();
+            }, 4000);
+        }
+
+        function updateSkills(skillGains, responseTime) {
+            // Bonus for quick responses
+            const speedBonus = responseTime < 30 ? 1.2 : responseTime < 45 ? 1.0 : 0.8;
+            
+            Object.keys(skillGains).forEach(skill => {
+                skills[skill] = Math.min(100, skills[skill] + Math.floor(skillGains[skill] * speedBonus));
+                
+                const fillElement = document.getElementById(`${skill}-skill`);
+                const valueElement = document.getElementById(`${skill}-value`);
+                
+                fillElement.style.width = `${skills[skill]}%`;
+                valueElement.textContent = `${skills[skill]}/100`;
+            });
+        }
+
+        function gainExperience(amount) {
+            experiencePoints += amount;
+            
+            // Check for level up
+            while (experiencePoints >= experienceToNext) {
+                experiencePoints -= experienceToNext;
+                playerLevel++;
+                experienceToNext = playerLevel * 100; // Increasing XP requirement
+                
+                showAchievement(`Level ${playerLevel} Achieved!`);
+                addLogEntry(`LEVEL UP! You are now Level ${playerLevel}`, 'educational');
+                
+                // Check for lesson unlocks
+                checkLessonUnlocks();
+            }
+            
+            updateProgressDisplay();
+        }
+
+        function checkLessonUnlocks() {
+            const totalExp = (playerLevel - 1) * 100 + experiencePoints;
+            let newUnlocks = 0;
+            
+            lessons.forEach((lesson, index) => {
+                if (totalExp >= lesson.unlockRequirement && index >= unlockedLessons) {
+                    unlockedLessons = index + 1;
+                    newUnlocks++;
+                    addLogEntry(`NEW LESSON UNLOCKED: ${lesson.title}`, 'educational');
+                }
+            });
+            
+            if (newUnlocks > 0) {
+                populateLessonList();
+            }
+        }
+
+        function updateProgressDisplay() {
+            const expProgress = (experiencePoints / experienceToNext) * 100;
+            document.getElementById('experience-progress').style.width = `${expProgress}%`;
+            document.getElementById('player-level').textContent = playerLevel;
+            document.getElementById('current-exp').textContent = experiencePoints;
+            document.getElementById('exp-to-next').textContent = experienceToNext;
+            document.getElementById('unlocked-lessons').textContent = `${unlockedLessons}/${lessons.length}`;
+        }
+
+        function updateProgress() {
+            updateProgressDisplay();
+        }
+
+        function showHint() {
+            const lesson = lessons[currentLesson];
+            const scenario = lesson.scenarios[currentScenario];
+            
+            document.getElementById('hint-text').textContent = scenario.hint;
+            document.getElementById('hint-system').classList.add('show');
+        }
+
+        function showAchievement(title) {
+            document.getElementById('achievement-text').textContent = title;
+            const popup = document.getElementById('achievement-popup');
+            popup.style.display = 'block';
+            
+            setTimeout(() => {
+                popup.style.display = 'none';
+            }, 3000);
+        }
+
+        function populateLessonList() {
+            const lessonList = document.getElementById('lesson-list');
+            lessonList.innerHTML = '';
+            
+            lessons.forEach((lesson, index) => {
+                const isUnlocked = index < unlockedLessons;
+                const isCurrent = index === currentLesson;
+                const totalExp = (playerLevel - 1) * 100 + experiencePoints;
+                
+                const card = document.createElement('div');
+                card.className = `lesson-card ${!isUnlocked ? 'locked' : ''} ${isCurrent ? 'current' : ''}`;
+                
+                if (isUnlocked) {
+                    card.onclick = () => selectLesson(index);
+                }
+                
+                const completedScenarios = lesson.scenarios.length; // For now, assume all scenarios available
+                const progressText = isUnlocked ? `${completedScenarios} scenarios available` : 'Locked';
+                
+                card.innerHTML = `
+                    <div class="lesson-title">
+                        <span>${lesson.title}</span>
+                        <span class="lesson-level ${!isUnlocked ? 'locked' : ''}">LVL ${lesson.level}</span>
+                    </div>
+                    <div style="font-size: 11px; margin-bottom: 5px;">${lesson.objective}</div>
+                    <div class="lesson-progress-info">${progressText}</div>
+                    ${!isUnlocked ? `<div class="unlock-requirement">Requires ${lesson.unlockRequirement} total XP</div>` : ''}
+                `;
+                
+                lessonList.appendChild(card);
+            });
+        }
+
+        function selectLesson(lessonIndex) {
+            if (lessonIndex >= unlockedLessons) return;
+            
+            currentLesson = lessonIndex;
+            currentScenario = 0;
+            loadScenario();
+            populateLessonList();
+            
+            // Switch back to scenario tab
+            switchTab('scenario');
+        }
+
+        function nextScenario() {
+            currentScenario++;
+            if (currentScenario >= lessons[currentLesson].scenarios.length) {
+                // Check if next lesson is unlocked
+                if (currentLesson + 1 < unlockedLessons) {
+                    currentLesson++;
+                    currentScenario = 0;
+                    addLogEntry(`ADVANCING TO LESSON ${currentLesson + 1}: ${lessons[currentLesson].title}`, 'educational');
+                } else {
+                    // Stay on current lesson, cycle scenarios
+                    currentScenario = 0;
+                    addLogEntry('CYCLING BACK TO FIRST SCENARIO - Complete more lessons to unlock advanced content!', 'educational');
+                }
+            }
+            
+            // Auto-advance after a brief delay
+            setTimeout(() => {
+                loadScenario();
+                populateLessonList();
+            }, 2000);
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.getElementById(`${tabName}-tab`).style.display = 'block';
+        }
+
+        function switchMobileView(viewName) {
+            // Update mobile nav buttons
+            document.querySelectorAll('.mobile-nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide sections
+            const terminalSection = document.querySelector('.terminal-section');
+            const learningPanel = document.querySelector('.learning-panel');
+            
+            if (viewName === 'terminal') {
+                terminalSection.classList.add('mobile-active');
+                learningPanel.classList.remove('mobile-active');
+            } else {
+                terminalSection.classList.remove('mobile-active');
+                learningPanel.classList.add('mobile-active');
+            }
+        }
+
+        function selectQuizOption(index) {
+            document.querySelectorAll('.quiz-option').forEach((option, i) => {
+                option.classList.remove('selected');
+                if (i === index) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+
+        function submitQuiz() {
+            const selected = document.querySelector('.quiz-option.selected');
+            if (!selected) return;
+            
+            const selectedIndex = Array.from(document.querySelectorAll('.quiz-option')).indexOf(selected);
+            const question = quizQuestions[0];
+            
+            if (selectedIndex === question.correct) {
+                addLogEntry("QUIZ: Correct answer! " + question.explanation, 'educational');
+                updateSkills({priority: 10, communication: 5}, 30);
+            } else {
+                addLogEntry("QUIZ: Incorrect. " + question.explanation, 'feedback');
+            }
+        }
+
+        // Initialize
+        addLogEntry('CRISIS MANAGEMENT E-LEARNING SYSTEM INITIALIZED', 'educational');
+        addLogEntry('APOCALYPSE SIMULATION PROTOCOL ACTIVATED', 'high');
+        addLogEntry('You are humanity\'s last hope. As civilization crumbles, your decisions determine who lives and who dies.', 'educational');
+        addLogEntry('Navigate through the collapse, manage scarce resources, and lead survivors through impossible choices.', 'educational');
+        addLogEntry('The old world is gone. Welcome to the new reality.', 'high');
+        
+        populateLessonList();
+        updateProgressDisplay();
+        
+        setTimeout(() => {
+            loadScenario();
+        }, 3000);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99185de09187da3d',t:'MTc2MDk2MTc1MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
